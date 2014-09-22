@@ -27,6 +27,11 @@ class SimpleFlake
     protected $random_shift = 0;
     protected $timestamp_shift = 23;
 
+    /**
+     * Internal storage
+     */
+    protected $flake = null;
+
 
     /**
      * Generate a 64 bit, roughly-ordered, globally-unique ID 
@@ -37,12 +42,23 @@ class SimpleFlake
      */
     public function __construct($timestamp = null, $random_bits = null, $epoch = null)
     {
-    //return $this->simpleflake($timestamp, $random_bits, $epoch);
+        $this->flake = $this->simpleflake($timestamp, $random_bits, $epoch);
     }
 
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        if ( ! $this->flake ){
+            $this->flake = $this->simpleflake();
+        }
+        return number_format($this->flake, 0, '', '');
+    }
 
     /**
      * Generate a 64 bit, roughly-ordered, globally-unique ID
+     *
      * @param integer $timestamp
      * @param integer $random_bits
      * @param integer $epoch
@@ -64,7 +80,7 @@ class SimpleFlake
 
         if (is_null($random_bits)) {
             $bits_as_hex = $this->random_bits(23);
-            $random_bits = pack("H*", $bits_as_hex);
+            $random_bits = hexdec($bits_as_hex);
         }
 
         $flake = ($millisecond_time << $this->timestamp_shift) | $random_bits;
@@ -76,12 +92,11 @@ class SimpleFlake
     /**
      * Parses a simpleflake and returns a named tuple with the parts
      *
+     * @param $flake
+     * @return array
      */
     public function parse_simpleflake($flake)
     {
-        // $timestamp  = $this->epoch;
-        // $timestamp .= $this->extract_bits(
-
         $timestamp = $this->epoch | $this->extract_bits(
             $flake,
             $this->timestamp_shift,
@@ -102,6 +117,8 @@ class SimpleFlake
      * Counts how many bits are needed to represent $value
      * @see http://stackoverflow.com/a/5302533/538353
      *
+     * @param $value
+     * @return int
      */
     private function count_bits($value)
     {
@@ -117,6 +134,8 @@ class SimpleFlake
      * Actual bits returned will be a multiple of 4 (1 hex digit)
      * @see http://stackoverflow.com/a/5302533/538353
      *
+     * @param $bits
+     * @return string
      */
     private function random_bits($bits)
     {
@@ -140,44 +159,20 @@ class SimpleFlake
             $result .= sprintf($format_string, $more_bits);
             $accumulated_bits += $bits_to_add;
         }
-
         return $result;
     }
 
 
     /**
-     * Pad bytes
-     *
-     */
-    private function pad_bytes_to_64($string)
-    {
-        // python
-        // return format(string, "064b")
-    }
-
-
-    /**
-     * Show binary digits of a number, pads to 64 bits unless specified.
-     *
-     */
-    private function binary($num, $padding = true)
-    {
-        // python
-        // binary_digits = "{0:b}".format(int(num))
-        // if not padding:
-        //     return binary_digits
-        // return pad_bytes_to_64(int(num))
-    }
-
-
-    /**
      * Extract a portion of a bit string. Similar to substr()
+     *
+     * @param $data
+     * @param $shift
+     * @param $length
+     * @return int
      */
     private function extract_bits($data, $shift, $length)
     {
-        // python
-        // $bitmask = ((1 << $length) - 1) << $shift;
-        // return (($data & $bitmask) >> $shift);
         $bitmask = ((1 << $length) - 1) << $shift;
         return (($data & $bitmask) >> $shift);
     }
