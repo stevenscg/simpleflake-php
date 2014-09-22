@@ -5,7 +5,16 @@ include 'SimpleFlake/SimpleFlake.php';
 $s = new SimpleFlake();
 
 $i = 0;
-while ($i < 50) {
-	echo number_format($s->simpleflake(), 0, '', '') . PHP_EOL;
-	$i++;	
+$storage = array();
+
+while ($i < 500) {
+    $flake = new SimpleFlake();
+    if(array_key_exists('x'.$flake, $storage)){
+        echo "Collision!";
+        exit(1);
+    }
+    $storage['x'.$flake] = null;
+
+    echo $flake . PHP_EOL;
+    $i++;
 }
