@@ -1,4 +1,5 @@
 simpleflake-php
 ===============
 
-A Simpleflake clone for PHP
+Simple distributed ID generation
+
